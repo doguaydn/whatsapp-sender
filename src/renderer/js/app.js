@@ -27,6 +27,7 @@ class App {
     this.bindLogout();
     this.bindListEvents();
     this.bindEmojiPicker();
+    this.bindVcfEvents();
 
     // Listeleri yükle ve tümünü göster
     await this.loadContactLists();
@@ -1338,6 +1339,254 @@ class App {
   // ========================================
   // Çıkış
   // ========================================
+
+  // ========================================
+  // Excel → VCF Dönüştürme
+  // ========================================
+
+  bindVcfEvents() {
+    document.getElementById('btnExcelToVcf').addEventListener('click', () => this.startVcfConvert());
+    document.getElementById('btnVcfPreview').addEventListener('click', () => this.previewVcf());
+    document.getElementById('btnVcfConvert').addEventListener('click', () => this.executeVcfConvert());
+    document.getElementById('btnVcfCancel').addEventListener('click', () => this.closeVcfModal());
+    document.querySelector('#vcfModal .modal-overlay').addEventListener('click', () => this.closeVcfModal());
+  }
+
+  closeVcfModal() {
+    document.getElementById('vcfModal').classList.add('hidden');
+    document.getElementById('vcfPreview').classList.add('hidden');
+    document.getElementById('btnVcfConvert').classList.add('hidden');
+    document.getElementById('btnVcfPreview').classList.remove('hidden');
+    this._vcfExcelData = null;
+    this._vcfProcessed = null;
+  }
+
+  async startVcfConvert() {
+    const result = await window.api.importExcel();
+    if (!result || result.rows.length === 0) {
+      this.showToast('Excel dosyası boş veya seçilmedi', 'error');
+      return;
+    }
+    this._vcfExcelData = result;
+    document.getElementById('vcfPreview').classList.add('hidden');
+    document.getElementById('btnVcfConvert').classList.add('hidden');
+    document.getElementById('btnVcfPreview').classList.remove('hidden');
+    document.getElementById('vcfModal').classList.remove('hidden');
+  }
+
+  // Tüm ülke kodları (uzundan kısaya — en spesifik eşleşme öncelikli)
+  getCountryCodes() {
+    return [
+      // 4 haneli
+      '1784','1767','1758','1721','1684','1670','1664','1649','1473','1441','1345','1284','1268','1264','1246','1242',
+      // 3 haneli
+      '998','997','996','995','994','993','992','991','977','976','975','974','973','972','971','970','969','968','967','966','965','964','963','962','961','960',
+      '899','898','897','896','895','894','893','892','891','890','889','888','887','886','885','884','883','882','881','880',
+      '859','858','857','856','855','854','853','852','851','850',
+      '699','698','697','696','695','694','693','692','691','690','689','688','687','686','685','684','683','682','681','680',
+      '679','678','677','676','675','674','673','672','671','670',
+      '599','598','597','596','595','594','593','592','591','590',
+      '509','508','507','506','505','504','503','502','501','500',
+      '429','428','427','426','425','424','423','422','421','420',
+      '389','388','387','386','385','384','383','382','381','380','379','378','377','376','375','374','373','372','371','370',
+      '359','358','357','356','355','354','353','352','351','350',
+      '299','298','297','296','295','294','293','292','291','290',
+      '269','268','267','266','265','264','263','262','261','260','259','258','257','256','255','254','253','252','251','250',
+      '249','248','247','246','245','244','243','242','241','240','239','238','237','236','235','234','233','232','231','230',
+      '229','228','227','226','225','224','223','222','221','220','219','218','217','216','215','214','213','212','211','210',
+      // 2 haneli
+      '98','95','94','93','92','91','90','86','84','82','81',
+      '66','65','64','63','62','61','60','58','57','56','55','54','53','52','51',
+      '49','48','47','46','45','44','43','41','40','39','36','34','33','32','31','30',
+      '27','20',
+      // 1 haneli
+      '7','1'
+    ];
+  }
+
+  // Telefon numarasından ülke kodunu algıla
+  detectCountryCode(phone) {
+    const cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
+
+    // +XX ile başlıyorsa
+    if (cleaned.startsWith('+')) {
+      const digits = cleaned.substring(1);
+      for (const code of this.getCountryCodes()) {
+        if (digits.startsWith(code)) {
+          return { code: '+' + code, national: digits.substring(code.length) };
+        }
+      }
+    }
+
+    // 00XX ile başlıyorsa (uluslararası format)
+    if (cleaned.startsWith('00')) {
+      const digits = cleaned.substring(2);
+      for (const code of this.getCountryCodes()) {
+        if (digits.startsWith(code)) {
+          return { code: '+' + code, national: digits.substring(code.length) };
+        }
+      }
+    }
+
+    return null; // Ülke kodu algılanamadı
+  }
+
+  // Ülke kodu → toplam numara uzunluğu (ülke kodu dahil)
+  getExpectedLengths() {
+    return {
+      '90': [12],       // Türkiye: +90 5XX XXX XXXX = 12
+      '1': [11],        // ABD/Kanada: +1 XXX XXX XXXX = 11
+      '44': [12, 13],   // İngiltere: 12-13
+      '49': [12, 13, 14], // Almanya: 12-14
+      '33': [12],       // Fransa
+      '39': [12, 13],   // İtalya
+      '34': [12],       // İspanya
+      '31': [12],       // Hollanda
+      '32': [11, 12],   // Belçika
+      '41': [12],       // İsviçre
+      '43': [12, 13],   // Avusturya
+      '46': [12],       // İsveç
+      '47': [11],       // Norveç
+      '48': [11],       // Polonya
+      '7': [11],        // Rusya
+      '86': [13],       // Çin
+      '91': [12, 13],   // Hindistan
+      '81': [12, 13],   // Japonya
+      '82': [12, 13],   // Güney Kore
+      '61': [11, 12],   // Avustralya
+      '55': [12, 13],   // Brezilya
+      '971': [12, 13],  // BAE
+      '966': [12, 13],  // Suudi Arabistan
+      '994': [12],      // Azerbaycan
+      '380': [12],      // Ukrayna
+      '30': [12],       // Yunanistan
+      '20': [12, 13],   // Mısır
+      '62': [12, 13, 14], // Endonezya
+    };
+  }
+
+  // Formatlanmış numaranın geçerliliğini kontrol et
+  validateFormattedPhone(formatted) {
+    // + ile başlamalı, ardından sadece rakam
+    if (!formatted.startsWith('+')) return 'missing_plus';
+    const digits = formatted.substring(1);
+    if (!/^\d+$/.test(digits)) return 'non_digit';
+    if (digits.length < 7) return 'too_short';
+    if (digits.length > 15) return 'too_long';
+
+    // Ülke koduna göre uzunluk kontrolü
+    const detected = this.detectCountryCode(formatted);
+    if (detected) {
+      const expected = this.getExpectedLengths()[detected.code.substring(1)];
+      if (expected && !expected.includes(digits.length)) {
+        return 'wrong_length';
+      }
+    }
+
+    return 'ok';
+  }
+
+  formatPhoneInternational(phone, defaultCountryCode) {
+    // Tüm formatlama karakterlerini temizle
+    let cleaned = phone.replace(/[\s\-\(\)\.\/\\]/g, '');
+
+    // Zaten ülke kodu varsa
+    const detected = this.detectCountryCode(cleaned);
+    if (detected) {
+      return detected.code + detected.national;
+    }
+
+    // Başında 0 varsa kaldır ve varsayılan ülke kodu ekle
+    if (cleaned.startsWith('0')) {
+      return defaultCountryCode + cleaned.substring(1);
+    }
+
+    // Düz numara — varsayılan ülke kodu ekle
+    return defaultCountryCode + cleaned;
+  }
+
+  // Önizleme göster
+  previewVcf() {
+    if (!this._vcfExcelData) return;
+
+    const defaultCode = document.getElementById('vcfDefaultCountry').value;
+    const contacts = this.normalizeExcelData(this._vcfExcelData.rows, this._vcfExcelData.columns);
+
+    const processed = [];
+    let warnCount = 0;
+
+    for (const contact of contacts) {
+      const rawPhone = this.getPhoneFromContact(contact);
+      if (!rawPhone) continue;
+
+      const formatted = this.formatPhoneInternational(rawPhone, defaultCode);
+      const validation = this.validateFormattedPhone(formatted);
+      const firstName = contact['İsim'] || contact['isim'] || '';
+      const lastName = contact['Soyisim'] || contact['soyisim'] || '';
+      const fullName = [firstName, lastName].filter(Boolean).join(' ') || '-';
+
+      if (validation !== 'ok') warnCount++;
+
+      processed.push({ rawPhone, formatted, fullName, firstName, lastName, validation });
+    }
+
+    this._vcfProcessed = processed;
+
+    // Tablo oluştur
+    const table = document.getElementById('vcfPreviewTable');
+    const rows = processed.map((p) => {
+      const cls = p.validation === 'ok' ? 'vcf-row-ok' : 'vcf-row-warn';
+      const warn = p.validation !== 'ok' ? ' ⚠' : '';
+      return `<tr class="${cls}">
+        <td>${this.escapeHtml(p.fullName)}</td>
+        <td>${this.escapeHtml(p.rawPhone)}</td>
+        <td>${this.escapeHtml(p.formatted)}${warn}</td>
+      </tr>`;
+    }).join('');
+
+    table.innerHTML = `<table>
+      <thead><tr><th>İsim</th><th>Orijinal</th><th>Düzenlenmiş</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+    // Bilgi
+    document.getElementById('vcfPreviewCount').textContent = `${processed.length} kişi`;
+    const warnEl = document.getElementById('vcfPreviewWarn');
+    if (warnCount > 0) {
+      warnEl.textContent = `⚠ ${warnCount} numara şüpheli uzunlukta`;
+      warnEl.classList.remove('hidden');
+    } else {
+      warnEl.classList.add('hidden');
+    }
+
+    document.getElementById('vcfPreview').classList.remove('hidden');
+    document.getElementById('btnVcfConvert').classList.remove('hidden');
+    document.getElementById('btnVcfPreview').classList.add('hidden');
+  }
+
+  async executeVcfConvert() {
+    if (!this._vcfProcessed || this._vcfProcessed.length === 0) {
+      this.showToast('Önce önizleme yapın', 'error');
+      return;
+    }
+
+    let vcfContent = '';
+    for (const p of this._vcfProcessed) {
+      vcfContent += 'BEGIN:VCARD\r\n';
+      vcfContent += 'VERSION:3.0\r\n';
+      vcfContent += `FN:${p.fullName}\r\n`;
+      vcfContent += `N:${p.lastName};${p.firstName};;;\r\n`;
+      vcfContent += `TEL;TYPE=CELL:${p.formatted}\r\n`;
+      vcfContent += 'END:VCARD\r\n';
+    }
+
+    const savedPath = await window.api.saveVcf(vcfContent);
+
+    if (savedPath) {
+      this.showToast(`${this._vcfProcessed.length} kişi VCF olarak kaydedildi`, 'success');
+      this.closeVcfModal();
+    }
+  }
 
   bindLogout() {
     document.getElementById('btnLogout').addEventListener('click', async () => {

@@ -5,8 +5,8 @@
   "description": "WhatsApp toplu ve tekli mesaj gönderme uygulaması",
   "main": "src/main/index.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
+    "start": "node_modules/electron/dist/WhatsApp\\ Sender.app/Contents/MacOS/Electron .",
+    "dev": "node_modules/electron/dist/WhatsApp\\ Sender.app/Contents/MacOS/Electron . --dev",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
     "build": "electron-builder --mac --win"

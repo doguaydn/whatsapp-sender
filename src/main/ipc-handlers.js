@@ -28,6 +28,20 @@ function registerIpcHandlers(ipcMain, mainWindow, whatsapp, store, scheduler) {
     return { columns, rows: data };
   });
 
+  // VCF kaydetme
+  ipcMain.handle('vcf:save', async (event, vcfContent) => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'VCF Dosyasını Kaydet',
+      defaultPath: 'rehber.vcf',
+      filters: [{ name: 'vCard', extensions: ['vcf'] }],
+    });
+
+    if (result.canceled || !result.filePath) return null;
+
+    fs.writeFileSync(result.filePath, vcfContent, 'utf-8');
+    return result.filePath;
+  });
+
   // Dosya seçme (medya)
   ipcMain.handle('media:select-file', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {

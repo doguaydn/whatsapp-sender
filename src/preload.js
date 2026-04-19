@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld('api', {
   updateContactList: (id, updates) => ipcRenderer.invoke('contactLists:update', { id, updates }),
   deleteContactList: (id) => ipcRenderer.invoke('contactLists:delete', id),
 
+  // VCF
+  saveVcf: (vcfContent) => ipcRenderer.invoke('vcf:save', vcfContent),
+
   // Mesaj
   sendMessage: (data) => ipcRenderer.invoke('message:send', data),
   scheduleMessage: (data) => ipcRenderer.invoke('message:schedule', data),
