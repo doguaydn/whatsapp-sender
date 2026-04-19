@@ -1,0 +1,59 @@
+{
+  "name": "whatsapp-sender",
+  "productName": "WhatsApp Sender",
+  "version": "1.0.0",
+  "description": "WhatsApp toplu ve tekli mesaj gönderme uygulaması",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build": "electron-builder --mac --win"
+  },
+  "author": "Dogu",
+  "license": "MIT",
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "node-cron": "^3.0.3",
+    "puppeteer": "^24.41.0",
+    "qrcode": "^1.5.4",
+    "whatsapp-web.js": "^1.26.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.dogu.whatsapp-sender",
+    "productName": "WhatsApp Sender",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "!node_modules/puppeteer/.local-chromium"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "icon": "build/icon.icns",
+      "target": ["dmg"]
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false
+    }
+  }
+}

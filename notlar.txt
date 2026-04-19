@@ -1,0 +1,54 @@
+WhatsApp Sender - Kullanım Notları
+====================================
+
+HIZLI KURULUM (tek komutla)
+=============================
+
+  macOS:
+    1. VSCode'da Terminal > New Terminal aç
+    2. Yapıştır ve Enter'a bas:
+       cd ~/Desktop/whatsapp-sender && bash kurulum-macos.sh
+
+  Windows:
+    1. whatsapp-sender klasöründeki "kurulum-windows.bat" dosyasına çift tıkla
+    2. Kurulum bitince "baslat.bat" dosyasına çift tıklayarak uygulamayı aç
+
+
+MANUEL KURULUM (adım adım)
+=============================
+
+  ADIM 1: NODE.JS KURULUMU (bilgisayarda yoksa, sadece bir kere)
+    - https://nodejs.org adresine git
+    - "LTS" yazan yeşil butona tıkla ve indir
+    - İndirilen dosyayı aç ve kurulumu tamamla (hep Next/İleri)
+    - Kurulum bittikten sonra VSCode'u kapat ve tekrar aç
+
+  ADIM 2: BAĞIMLILIKLARI KUR (sadece bir kere)
+    - VSCode'da Terminal > New Terminal aç
+    - Aşağıdaki komutları sırayla yaz ve Enter'a bas:
+      cd ~/Desktop/whatsapp-sender
+      npm install
+    - Kurulum birkaç dakika sürebilir, bekle
+
+  ADIM 3: ÇALIŞTIRMA (her seferinde)
+    - VSCode terminalinde:
+      cd ~/Desktop/whatsapp-sender
+      npm start
+    - Uygulama penceresi açılacak
+    - İlk seferde QR kod gelecek, telefondan tara:
+      WhatsApp > Ayarlar > Bağlı Cihazlar > Cihaz Bağla
+    - Sonraki açılışlarda otomatik bağlanır
+
+
+KAPATMA
+========
+  - Uygulama penceresini kapat
+  - Veya terminalde Ctrl+C bas
+
+
+NOTLAR
+=======
+  - Kişiler, şablonlar ve raporlar otomatik kaydedilir
+  - Mesajlar arası 3 saniye bekleme var (WhatsApp ban koruması)
+  - node_modules klasörünü silmeyin, uygulama çalışmaz
+  - Silindiyse tekrar "npm install" yapın

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c6ff7"/>
+      <stop offset="100%" style="stop-color:#5b4fd6"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <!-- Chat bubble -->
+  <path d="M512 200C340 200 200 320 200 470c0 55 18 106 50 150l-40 130 140-45c45 25 98 38 162 38 172 0 312-120 312-273S684 200 512 200z" fill="white" opacity="0.95"/>
+  <!-- Send arrow -->
+  <path d="M420 440 L620 470 L420 500 L450 470 Z" fill="#7c6ff7" stroke="#7c6ff7" stroke-width="8" stroke-linejoin="round"/>
+  <line x1="450" y1="470" x2="620" y2="470" stroke="#7c6ff7" stroke-width="12" stroke-linecap="round"/>
+  <!-- Small dots indicating bulk -->
+  <circle cx="380" cy="560" r="16" fill="#7c6ff7" opacity="0.4"/>
+  <circle cx="430" cy="580" r="16" fill="#7c6ff7" opacity="0.3"/>
+  <circle cx="480" cy="590" r="16" fill="#7c6ff7" opacity="0.2"/>
+</svg>

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.wwebjs_auth/
+.wwebjs_cache/
+data/*.json
+*.log
+*.dmg
+
+# macOS
+.DS_Store
+Thumbs.db
+
+# Test dosyaları
+test_*.xlsx
+
+# Build cache
+build/icon.iconset/

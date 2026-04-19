@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
+  <title>WhatsApp Sender</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <!-- Üst Bar -->
+  <header class="titlebar">
+    <div class="titlebar-drag">
+      <h1 class="titlebar-title">WhatsApp Sender</h1>
+    </div>
+    <div class="connection-status" id="connectionStatus">
+      <span class="status-dot disconnected"></span>
+      <span class="status-text">Bağlantı bekleniyor...</span>
+    </div>
+  </header>
+
+  <!-- Ana İçerik -->
+  <div class="app-container">
+    <!-- Sol Sidebar -->
+    <nav class="sidebar">
+      <button class="nav-btn active" data-page="contacts">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Kişiler</span>
+      </button>
+      <button class="nav-btn" data-page="message">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Mesaj</span>
+      </button>
+      <button class="nav-btn" data-page="templates">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span>Şablonlar</span>
+      </button>
+      <button class="nav-btn" data-page="schedule">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>Zamanlama</span>
+      </button>
+      <button class="nav-btn" data-page="reports">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        <span>Raporlar</span>
+      </button>
+      <button class="nav-btn" data-page="lists">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3h18v18H3z"/>
+          <path d="M3 9h18"/>
+          <path d="M3 15h18"/>
+          <path d="M9 3v18"/>
+        </svg>
+        <span>Listeler</span>
+      </button>
+
+      <div class="sidebar-spacer"></div>
+
+      <!-- Tema değiştirme -->
+      <div class="theme-switch-row" id="btnToggleTheme">
+        <svg class="theme-icon theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <div class="theme-toggle">
+          <div class="theme-toggle-track">
+            <div class="theme-toggle-thumb"></div>
+          </div>
+        </div>
+        <svg class="theme-icon theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </div>
+
+      <!-- Çıkış -->
+      <button class="nav-btn nav-btn-logout" id="btnLogout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Çıkış Yap</span>
+      </button>
+    </nav>
+
+    <!-- Sayfa İçerikleri -->
+    <main class="content">
+
+      <!-- QR Kod Sayfası (Overlay) -->
+      <div class="page qr-overlay" id="pageQR">
+        <div class="qr-container">
+          <h2>WhatsApp'a Bağlan</h2>
+          <p>Telefonunuzdan WhatsApp > Bağlı Cihazlar > Cihaz Bağla yolunu izleyin ve QR kodu tarayın.</p>
+          <div class="qr-code" id="qrCode">
+            <div class="qr-loading">QR kod bekleniyor...</div>
+          </div>
+          <button class="btn btn-secondary" id="btnReconnect">Yeniden Bağlan</button>
+        </div>
+      </div>
+
+      <!-- Kişiler Sayfası -->
+      <div class="page active" id="pageContacts">
+        <div class="page-header">
+          <h2>Kişi Yönetimi</h2>
+          <div class="page-actions">
+            <button class="btn btn-primary" id="btnImportExcel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Excel Yükle
+            </button>
+            <button class="btn btn-secondary" id="btnAddContact">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Kişi Ekle
+            </button>
+          </div>
+        </div>
+
+        <!-- Kişi Listeleri -->
+        <div class="contact-lists-bar">
+          <div class="lists-scroll" id="listsScroll">
+            <button class="list-chip active" data-list-id="all">Tümü</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btnDeleteList" title="Seçili listeyi sil">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Elle Kişi Ekleme Formu (dinamik) -->
+        <div class="add-contact-form hidden" id="addContactForm">
+          <h3>Yeni Kişi Ekle</h3>
+          <div class="form-row" id="addContactFields"></div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="btnSaveContact">Ekle</button>
+            <button class="btn btn-ghost" id="btnCancelContact">İptal</button>
+          </div>
+        </div>
+
+        <!-- Kişi Tablosu -->
+        <div class="contacts-toolbar">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="searchContacts" placeholder="Kişi ara...">
+          </div>
+          <div class="toolbar-actions">
+            <span class="selected-count" id="selectedCount">0 kişi seçili</span>
+            <button class="btn btn-danger btn-sm" id="btnDeleteSelected">Seçilenleri Sil</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="contacts-table" id="contactsTable">
+            <thead>
+              <tr>
+                <th class="th-checkbox">
+                  <input type="checkbox" id="selectAll">
+                </th>
+                <th>Telefon</th>
+                <th>İsim</th>
+                <th>Soyisim</th>
+                <th class="th-actions">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="contactsBody">
+              <tr class="empty-row">
+                <td colspan="5">
+                  <div class="empty-state">
+                    <p>Henüz kişi eklenmedi</p>
+                    <p class="empty-hint">Excel yükleyin veya elle kişi ekleyin</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mesaj Sayfası -->
+      <div class="page" id="pageMessage">
+        <div class="page-header">
+          <h2>Mesaj Gönder</h2>
+        </div>
+
+        <div class="message-layout">
+          <div class="message-compose">
+            <div class="form-group">
+              <label>Alıcılar</label>
+              <div class="recipients-info" id="recipientsInfo">
+                <span>0 kişi seçili</span>
+                <button class="btn btn-link" data-page="contacts">Kişi seç</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Şablon Kullan</label>
+              <select id="templateSelect" class="form-select">
+                <option value="">-- Şablon seçin --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mesaj</label>
+              <textarea id="messageText" class="form-textarea" rows="6" placeholder="Mesajınızı yazın... Değişkenler: {isim}, {soyisim}, {telefon}"></textarea>
+              <div class="message-variables">
+                <span class="variable-tag" data-var="{isim}">{isim}</span>
+                <span class="variable-tag" data-var="{soyisim}">{soyisim}</span>
+                <span class="variable-tag" data-var="{telefon}">{telefon}</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Dosya Ekle</label>
+              <div class="file-attach" id="fileAttach">
+                <button class="btn btn-secondary" id="btnAttachFile">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  Dosya Seç
+                </button>
+                <span class="file-name" id="fileName">Dosya seçilmedi</span>
+                <button class="btn btn-ghost btn-sm hidden" id="btnRemoveFile">Kaldır</button>
+              </div>
+            </div>
+
+            <div class="message-preview">
+              <h4>Önizleme</h4>
+              <div class="preview-bubble" id="previewBubble">
+                <p class="preview-text">Mesaj önizlemesi burada görünecek...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-actions-panel">
+            <button class="btn btn-primary btn-lg" id="btnSendNow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              Şimdi Gönder
+            </button>
+            <button class="btn btn-secondary btn-lg" id="btnScheduleSend">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Zamanla
+            </button>
+            <button class="btn btn-secondary btn-lg" id="btnSaveAsTemplate">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              Şablon Kaydet
+            </button>
+            <button class="btn btn-ghost btn-lg" id="btnClearMessage">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+              Temizle
+            </button>
+          </div>
+        </div>
+
+        <!-- Gönderim Sırasında Progress -->
+        <div class="send-progress hidden" id="sendProgress">
+          <div class="progress-header">
+            <h3 id="progressTitle">Mesajlar gönderiliyor...</h3>
+            <span id="progressCount">0/0</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-info hidden" id="progressInfo"></div>
+          <div class="progress-controls">
+            <button class="btn btn-secondary btn-sm" id="btnPauseSending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+              </svg>
+              Duraklat
+            </button>
+            <button class="btn btn-danger btn-sm" id="btnStopSending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              </svg>
+              Durdur
+            </button>
+          </div>
+          <div class="progress-log" id="progressLog"></div>
+        </div>
+      </div>
+
+      <!-- Şablonlar Sayfası -->
+      <div class="page" id="pageTemplates">
+        <div class="page-header">
+          <h2>Mesaj Şablonları</h2>
+        </div>
+        <div class="templates-grid" id="templatesGrid">
+          <div class="empty-state">
+            <p>Henüz şablon yok</p>
+            <p class="empty-hint">Mesaj sayfasından "Şablon Olarak Kaydet" butonunu kullanın</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zamanlama Sayfası -->
+      <div class="page" id="pageSchedule">
+        <div class="page-header">
+          <h2>Zamanlanmış Mesajlar</h2>
+        </div>
+        <div class="scheduled-list" id="scheduledList">
+          <div class="empty-state">
+            <p>Zamanlanmış mesaj yok</p>
+            <p class="empty-hint">Mesaj sayfasından "Zamanla" butonunu kullanın</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raporlar Sayfası -->
+      <div class="page" id="pageReports">
+        <div class="page-header reports-header">
+          <h2>Gönderim Raporları</h2>
+          <button class="btn btn-danger" id="btnClearReports">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Raporları Temizle
+          </button>
+        </div>
+        <div class="reports-list" id="reportsList">
+          <div class="empty-state">
+            <p>Henüz rapor yok</p>
+            <p class="empty-hint">Mesaj gönderdiğinizde raporlar burada görünecek</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Listeler Sayfası -->
+      <div class="page" id="pageLists">
+        <div class="page-header">
+          <h2>Kişi Listeleri</h2>
+          <div class="page-actions">
+            <button class="btn btn-primary" id="btnImportExcelFromLists">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Excel Yükle
+            </button>
+          </div>
+        </div>
+        <div class="lists-page-grid" id="listsPageGrid">
+          <div class="empty-state">
+            <p>Henüz liste yok</p>
+            <p class="empty-hint">Excel yükleyerek yeni liste oluşturun</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Zamanlama Modal -->
+  <div class="modal hidden" id="scheduleModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3>Mesaj Zamanla</h3>
+      <div class="form-group">
+        <label>Tarih ve Saat</label>
+        <input type="datetime-local" id="scheduleDateTime" class="form-input">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btnConfirmSchedule">Zamanla</button>
+        <button class="btn btn-ghost" id="btnCancelSchedule">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Modal (prompt yerine) -->
+  <div class="modal hidden" id="inputModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3 id="inputModalTitle">Bilgi Girin</h3>
+      <div class="form-group">
+        <input type="text" id="inputModalValue" class="form-input" placeholder="">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btnInputModalOk">Tamam</button>
+        <button class="btn btn-ghost" id="btnInputModalCancel">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Bildirimi -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
