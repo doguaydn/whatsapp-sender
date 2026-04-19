@@ -26,6 +26,7 @@ class App {
     this.bindThemeToggle();
     this.bindLogout();
     this.bindListEvents();
+    this.bindEmojiPicker();
 
     // Listeleri yükle ve tümünü göster
     await this.loadContactLists();
@@ -1081,6 +1082,7 @@ class App {
     });
 
     document.getElementById('reportsList').addEventListener('click', (e) => {
+      if (e.target.closest('.btn-retry-failed')) return;
       const header = e.target.closest('.report-header');
       if (header) {
         const details = header.nextElementSibling;
@@ -1128,6 +1130,12 @@ class App {
           })
           .join('');
 
+        const retryBtn = r.failed > 0 && r.message && r.contacts
+          ? `<div class="report-actions">
+               <button class="btn btn-sm btn-retry btn-retry-failed" data-report-index="${reports.indexOf(r)}">Ba&#351;ar&#305;s&#305;z Olanlar&#305; Tekrar Dene</button>
+             </div>`
+          : '';
+
         return `
           <div class="report-card">
             <div class="report-header">
@@ -1141,9 +1149,19 @@ class App {
             <div class="report-details">
               ${details}
             </div>
+            ${retryBtn}
           </div>`;
       })
       .join('');
+
+    // Bind retry buttons
+    list.querySelectorAll('.btn-retry-failed').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const index = parseInt(btn.dataset.reportIndex);
+        this.retryFailedMessages(reports[index]);
+      });
+    });
   }
 
   // ========================================
@@ -1328,6 +1346,140 @@ class App {
         this.showToast('Çıkış yapıldı, yeniden QR kod tarayın', 'info');
       }
     });
+  }
+
+  // ========================================
+  // Emoji Picker
+  // ========================================
+
+  bindEmojiPicker() {
+    const emojiData = {
+      'Yuzler': ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😊','😇','😍','🤩','😘','😗','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','😐','😑','😶','😏','😒','🙄','😬','😮','😯','😲','😳','🥺','😢','😭','😤','😠','😡','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','🤖','😺','😸','😹','😻','😼','😽','🙀','😿','😾'],
+      'Eller': ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','💪'],
+      'Kalpler': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟'],
+      'Nesneler': ['🎉','🎊','🎈','🎁','🎀','🏆','🥇','📱','💻','📧','📩','📮','📝','📄','📋','📌','📎','🔗','📞','📅','⏰','🔔','🔑','🔒','💡','📢','🚀','⭐','🌟','✨','🔥','💯','✅','❌','⚠️','❓','❗','💬','💭','🗨️'],
+    };
+
+    const tabsContainer = document.getElementById('emojiTabs');
+    const gridContainer = document.getElementById('emojiGrid');
+    const picker = document.getElementById('emojiPicker');
+    const toggleBtn = document.getElementById('btnEmojiToggle');
+    const textarea = document.getElementById('messageText');
+
+    // Build tabs
+    const categories = Object.keys(emojiData);
+    tabsContainer.innerHTML = categories
+      .map((cat, i) => `<button class="emoji-tab${i === 0 ? ' active' : ''}" data-category="${cat}">${cat}</button>`)
+      .join('');
+
+    const showCategory = (cat) => {
+      gridContainer.innerHTML = emojiData[cat]
+        .map((e) => `<button class="emoji-item" type="button">${e}</button>`)
+        .join('');
+      tabsContainer.querySelectorAll('.emoji-tab').forEach((t) => {
+        t.classList.toggle('active', t.dataset.category === cat);
+      });
+    };
+
+    showCategory(categories[0]);
+
+    tabsContainer.addEventListener('click', (e) => {
+      const tab = e.target.closest('.emoji-tab');
+      if (tab) showCategory(tab.dataset.category);
+    });
+
+    gridContainer.addEventListener('click', (e) => {
+      const item = e.target.closest('.emoji-item');
+      if (!item) return;
+      const emoji = item.textContent;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      textarea.value = text.substring(0, start) + emoji + text.substring(end);
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+      this.updateMessagePreview();
+    });
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      picker.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!picker.classList.contains('hidden') && !picker.contains(e.target) && e.target !== toggleBtn) {
+        picker.classList.add('hidden');
+      }
+    });
+  }
+
+  // ========================================
+  // Retry Failed Messages
+  // ========================================
+
+  async retryFailedMessages(report) {
+    const failedDetails = (report.details || []).filter((d) => !d.success);
+    if (failedDetails.length === 0) {
+      this.showToast('Ba\u015Far\u0131s\u0131z mesaj yok', 'info');
+      return;
+    }
+
+    const failedPhones = new Set(failedDetails.map((d) => d.phone));
+    const contacts = (report.contacts || []).filter((c) => {
+      const phone = c._phone || c['Telefon'] || this.getPhoneFromContact(c);
+      return failedPhones.has(phone);
+    });
+
+    if (contacts.length === 0) {
+      this.showToast('Tekrar g\u00F6nderilecek ki\u015Fi bulunamad\u0131', 'error');
+      return;
+    }
+
+    const message = report.message;
+    if (!message) {
+      this.showToast('Orijinal mesaj bulunamad\u0131', 'error');
+      return;
+    }
+
+    const status = await window.api.getWhatsAppStatus();
+    if (!status.isReady) {
+      this.showToast('WhatsApp ba\u011Flant\u0131s\u0131 yok', 'error');
+      return;
+    }
+
+    // Switch to message page and show progress
+    this.navigateTo('message');
+    const progressEl = document.getElementById('sendProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressCount = document.getElementById('progressCount');
+    const progressLog = document.getElementById('progressLog');
+
+    progressEl.classList.remove('hidden');
+    progressLog.innerHTML = '';
+    progressCount.textContent = `0/${contacts.length}`;
+    progressFill.style.width = '0%';
+
+    // Temporarily set selectedContacts size for progress tracking
+    const originalSelected = new Set(this.selectedContacts);
+    this.selectedContacts = new Set(contacts.map((_, i) => i));
+
+    const result = await window.api.sendMessage({
+      contacts,
+      message,
+      mediaPath: report.mediaPath || null,
+    });
+
+    this.selectedContacts = originalSelected;
+
+    progressCount.textContent = `${contacts.length}/${contacts.length}`;
+    progressFill.style.width = '100%';
+
+    this.showToast(
+      `Tekrar deneme: ${result.sent} g\u00F6nderildi, ${result.failed} ba\u015Far\u0131s\u0131z`,
+      result.failed > 0 ? 'error' : 'success'
+    );
+
+    this.loadReports();
   }
 
   // ========================================

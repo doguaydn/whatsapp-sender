@@ -54,6 +54,9 @@ function registerIpcHandlers(ipcMain, mainWindow, whatsapp, store, scheduler) {
       sent: results.filter((r) => r.success).length,
       failed: results.filter((r) => !r.success).length,
       details: results,
+      message,
+      contacts,
+      mediaPath: mediaPath || null,
     };
 
     store.saveReport(report);
